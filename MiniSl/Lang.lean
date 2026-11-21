@@ -29,9 +29,7 @@ instance : Union Heap where
 def Disjoint (h₁ h₂ : Heap) : Prop := ∀ l, (h₁.get? l = none) ∨ (h₂.get? l = none)
 
 theorem union_maintains_h₁ : ∀ (h₁ h₂ : Heap) l x, h₁.get? l = some x → (h₁ ∪ h₂).get? l = some x := by
-  intro h₁ h₂ l x h_h1_is_some
-  simp [get?, Union.union, union] at *
-  grind
+  simp_all [get?, Union.union, union]
 
 theorem set_get_is_value : ∀ (h : Heap) l v, (h.set l v).get? l = some v := by simp [set, get?]
 
@@ -55,7 +53,7 @@ theorem always_exists_valid_alloc : ∀ h ls size, h.Finite ls → Nonempty (All
     clear h_fin
     induction ls <;> grind
   refine ⟨⟨(ls.map (·.1)).sum + 1, fun i hi => ?_⟩⟩
-  rw [← h_fin, h_unset ls ∅ i fun p hp => Nat.lt_of_le_of_lt (h_bound p hp) hi.1]
+  rw [← h_fin, h_unset ls ∅ i fun p hp => by grind [h_bound p hp, hi.1]]
   rfl
 
 
@@ -66,26 +64,18 @@ theorem emp_disjoint : ∀ h, Disjoint h ∅ :=
 theorem disjoint_symm : ∀ {h₁ h₂}, Disjoint h₁ h₂ → Disjoint h₂ h₁ := by grind [Disjoint]
 
 theorem disjoint_union_comm : ∀ {h₁ h₂ : Heap}, Disjoint h₁ h₂ →  h₁ ∪ h₂ = h₂ ∪ h₁ := by
-  unfold Disjoint
   intro h₁ h₂ hdisj
-  simp [get?] at hdisj
-  apply funext
-  intro l
-  simp [Union.union]
-  unfold union
-  cases hdisj l <;> grind
+  funext l
+  cases hdisj l <;> simp_all [get?, Union.union, union]
 
 theorem emp_union : ∀ h : Heap, ∅ ∪ h = h := by
   intro h
-  simp [Union.union, EmptyCollection.emptyCollection]
-  unfold union
-  simp
-  grind
+  funext l
+  simp [Union.union, union, EmptyCollection.emptyCollection]
 
 theorem union_emp : ∀ h : Heap, h ∪ ∅ = h := by
   intro h
-  rw [disjoint_union_comm <| emp_disjoint h]
-  exact emp_union h
+  rw [disjoint_union_comm (emp_disjoint h), emp_union]
 
 end Heap
 
