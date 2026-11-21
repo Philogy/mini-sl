@@ -6,18 +6,21 @@ variable {α : Type u}
 
 namespace MiniSl
 
-inductive Res.NoFault : Res α → Prop
-  | silent {a h} : NoFault (.silent a h)
-  | valid_alloc {s h k} : (∀ l, (k l).NoFault)  → NoFault (.alloc s h k)
+def Res.HasOutcome : Res α → α → Heap → Prop
+  | .silent a h, a', h' => a = a' ∧ h = h'
+  | .fault, _, _ => False
+  | .alloc _ _ k, a', h' => ∃ l, (k l).HasOutcome a' h'
 
-def Prog.NoFault (p : Prog α) : Prop := (p.run ∅).NoFault
+instance : Membership (α × Heap) (Res α) where
+  mem
+  | r, (a', h') => r.HasOutcome a' h'
 
-inductive Res.Deterministic : Res α → α → Prop
-  | silent {r h} : Deterministic (.silent r h) r
-  | any_alloc {s h k r} : (∀ l, (k l).Deterministic r) → Deterministic (.alloc s h k) r
 
-def Prog.Deterministic (p : Prog α) : α → Prop := (p.run ∅).Deterministic
+def Res.NoFault : Res α → Prop
+  | silent _ _ => True
+  | .fault => False
+  | .alloc _ _ k => ∀ l, (k l).NoFault
 
-def Prog.Safe (p : Prog α) : Prop := p.NoFault ∧ ∃ r, p.Deterministic r
+def Res.Deterministic (r : Res α) (x : α) : Prop := ∀ x' h, r.HasOutcome x' h → x = x'
 
 end MiniSl

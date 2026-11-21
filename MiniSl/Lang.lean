@@ -26,6 +26,8 @@ def union (h₁ h₂ : Heap) : Heap := fun l => h₁ l <|> h₂ l
 instance : Union Heap where
   union := union
 
+def Disjoint (h₁ h₂ : Heap) : Prop := ∀ l, (h₁.get? l = none) ∨ (h₂.get? l = none)
+
 theorem union_maintains_h₁ : ∀ (h₁ h₂ : Heap) l x, h₁.get? l = some x → (h₁ ∪ h₂).get? l = some x := by
   intro h₁ h₂ l x h_h1_is_some
   simp [get?, Union.union, union] at *
@@ -44,7 +46,46 @@ def ValidAlloc (h : Heap) (start : Loc) (size : Size) : Prop := ∀ i ∈ [start
 def Alloc (h : Heap) (size : Size) := { l // h.ValidAlloc l size }
 
 theorem always_exists_valid_alloc : ∀ h ls size, h.Finite ls → Nonempty (Alloc h size) := by
-  sorry -- TODO Claude please
+  intro h ls size h_fin
+  have h_unset : ∀ (ls : List (Loc × Value)) (h₀ : Heap) l, (∀ p ∈ ls, p.1 < l) →
+      (ls.foldl (fun hᵢ (l, v) => hᵢ.set l v) h₀).get? l = h₀.get? l := by
+    intro ls
+    induction ls <;> grind [set_preserves_unset]
+  have h_bound : ∀ p ∈ ls, p.1 ≤ (ls.map (·.1)).sum := by
+    clear h_fin
+    induction ls <;> grind
+  refine ⟨⟨(ls.map (·.1)).sum + 1, fun i hi => ?_⟩⟩
+  rw [← h_fin, h_unset ls ∅ i fun p hp => Nat.lt_of_le_of_lt (h_bound p hp) hi.1]
+  rfl
+
+
+
+theorem emp_disjoint : ∀ h, Disjoint h ∅ :=
+  fun _ l => .inr (by simp [EmptyCollection.emptyCollection, get?])
+
+theorem disjoint_symm : ∀ {h₁ h₂}, Disjoint h₁ h₂ → Disjoint h₂ h₁ := by grind [Disjoint]
+
+theorem disjoint_union_comm : ∀ {h₁ h₂ : Heap}, Disjoint h₁ h₂ →  h₁ ∪ h₂ = h₂ ∪ h₁ := by
+  unfold Disjoint
+  intro h₁ h₂ hdisj
+  simp [get?] at hdisj
+  apply funext
+  intro l
+  simp [Union.union]
+  unfold union
+  cases hdisj l <;> grind
+
+theorem emp_union : ∀ h : Heap, ∅ ∪ h = h := by
+  intro h
+  simp [Union.union, EmptyCollection.emptyCollection]
+  unfold union
+  simp
+  grind
+
+theorem union_emp : ∀ h : Heap, h ∪ ∅ = h := by
+  intro h
+  rw [disjoint_union_comm <| emp_disjoint h]
+  exact emp_union h
 
 end Heap
 
