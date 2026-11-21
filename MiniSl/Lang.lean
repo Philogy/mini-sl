@@ -4,59 +4,47 @@ abbrev Value := Nat
 abbrev Loc := Nat
 abbrev Size := Nat
 
-def Heap := List (Loc × Value)
+def Heap := Loc → Option Value
 
-instance : EmptyCollection Heap := ⟨[]⟩
+instance : EmptyCollection Heap := ⟨fun _ => none⟩
 
 namespace Heap
 
 def get? (l : Loc) : Heap → Option Value :=
-  fun h => h.findSome?
-    (fun (l', v) => if l = l' then some v else none)
+  fun h => h l
 
 def set (l : Loc) (value : Value) : Heap → Heap :=
-  fun h => (l, value) :: h.filter (fun (l', _) => l' ≠ l)
+  fun h l' => if l = l' then some value else h l'
 
 def init (start : Loc) (size : Size) : Heap → Heap :=
   List.range size
     |>.map (· + start)
     |>.foldl (fun h l => h.set l 0)
 
+def union (h₁ h₂ : Heap) : Heap := fun l => h₁ l <|> h₂ l
+
+instance : Union Heap where
+  union := union
+
+theorem union_maintains_h₁ : ∀ (h₁ h₂ : Heap) l x, h₁.get? l = some x → (h₁ ∪ h₂).get? l = some x := by
+  intro h₁ h₂ l x h_h1_is_some
+  simp [get?, Union.union, union] at *
+  grind
+
 theorem set_get_is_value : ∀ (h : Heap) l v, (h.set l v).get? l = some v := by simp [set, get?]
 
 theorem set_preserves_unset : ∀ (h : Heap) l l' v, l ≠ l' → (h.set l v).get? l' = h.get? l' := by
-  intro h l l' v hl_ne
-  simp [get?, set, Ne.symm hl_ne]
-  induction h with
-  | nil => rfl
-  | cons x t ih => by_cases hx : x.1 = l <;> simp_all [List.findSome?_cons, Ne.symm hl_ne]
+  simp [get?, set]
+  grind
+
+def Finite (h : Heap) (ls : List (Loc × Value)) : Prop := ls.foldl (fun hᵢ (l, v) => hᵢ.set l v) ∅ = h
 
 def ValidAlloc (h : Heap) (start : Loc) (size : Size) : Prop := ∀ i ∈ [start:start+size], h.get? i = none
 
 def Alloc (h : Heap) (size : Size) := { l // h.ValidAlloc l size }
 
-theorem always_exists_valid_alloc : ∀ h size, Nonempty (Alloc h size) :=
-  fun h size => .intro ⟨h.foldl (fun b (l, _) => max b (l + 1)) 0, by
-    have key : ∀ (t : List (Nat × Nat)) (b : Nat), b ≤ t.foldl (fun b x => max b (x.1 + 1)) b ∧
-        ∀ x ∈ t, x.1 < t.foldl (fun b x => max b (x.1 + 1)) b := by
-      intro t
-      induction t with
-      | nil => simp
-      | cons y t ih =>
-        intro b
-        obtain ⟨h1, h2⟩ := ih (max b (y.1 + 1))
-        simp only [List.foldl_cons, List.mem_cons, forall_eq_or_imp]
-        exact ⟨by omega, by omega, h2⟩
-    intro i hi
-    apply List.findSome?_eq_none_iff.2
-    intro x hx
-    have := (key h 0).2 x hx
-    simp [Membership.mem] at hi
-    simp only [Loc, Value, Size] at *
-    simp
-    omega
-  ⟩
-
+theorem always_exists_valid_alloc : ∀ h ls size, h.Finite ls → Nonempty (Alloc h size) := by
+  sorry -- TODO Claude please
 
 end Heap
 
