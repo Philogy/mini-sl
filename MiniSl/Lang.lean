@@ -6,6 +6,8 @@ abbrev Size := Nat
 
 def Heap := List (Loc × Value)
 
+instance : EmptyCollection Heap := ⟨[]⟩
+
 namespace Heap
 
 def get? (l : Loc) : Heap → Option Value :=
@@ -77,7 +79,7 @@ def Prog.run : Prog α → Heap → Res α
 def Res.bind : Res α → (α → Prog β) → Res β
   | .fault, _ => .fault
   | .silent a h', f => (f a).run h'
-  | .alloc n h' k, f => .alloc n h' fun r => (k r).bind f
+  | .alloc s h' k, f => .alloc s h' fun r => (k r).bind f
 
 def Prog.bind : Prog α → (α → Prog β) → Prog β
   | p, f => fun h => (p h).bind f
