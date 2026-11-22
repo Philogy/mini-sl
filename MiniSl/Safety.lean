@@ -4,7 +4,7 @@ universe u
 
 variable {α : Type u} 
 
-namespace MiniSl
+namespace MiniSl.Prog
 
 def Res.HasOutcome : Res α → α → Heap → Prop
   | .silent a h, a', h' => a = a' ∧ h = h'
@@ -23,4 +23,4 @@ def Res.NoFault : Res α → Prop
 
 def Res.Deterministic (r : Res α) (x : α) : Prop := ∀ x' h, r.HasOutcome x' h → x = x'
 
-end MiniSl
+end MiniSl.Prog
