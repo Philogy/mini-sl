@@ -43,6 +43,21 @@ def ValidAlloc (h : Heap) (start : Loc) (size : Size) : Prop := ∀ i ∈ [start
 
 def Alloc (h : Heap) (size : Size) := { l // h.ValidAlloc l size }
 
+theorem union_assoc : ∀ h₁ h₂ h₃ : Heap, (h₁ ∪ h₂) ∪ h₃ = h₁ ∪ (h₂ ∪ h₃) := by
+  intro h₁ h₂ h₃
+  apply funext
+  intro l
+  simp [Union.union]
+  unfold union
+  cases h₁ l <;> simp
+
+theorem disjoint_both_is_disjoint_union
+  : ∀ {h₁ h₂ h' : Heap}, h'.Disjoint h₁ ∧ h'.Disjoint h₂ ↔ h'.Disjoint (h₁ ∪ h₂) := by
+  intro h₁ h₂ h'
+  simp_all [Disjoint, get?, Union.union]
+  unfold union
+  constructor <;> grind
+
 theorem always_exists_valid_alloc : ∀ h ls size, h.Finite ls → Nonempty (Alloc h size) := by
   intro h ls size h_fin
   have h_unset : ∀ (ls : List (Loc × Value)) (h₀ : Heap) l, (∀ p ∈ ls, p.1 < l) →
@@ -56,24 +71,22 @@ theorem always_exists_valid_alloc : ∀ h ls size, h.Finite ls → Nonempty (All
   rw [← h_fin, h_unset ls ∅ i fun p hp => by grind [h_bound p hp, hi.1]]
   rfl
 
-
-
-theorem emp_disjoint : ∀ h, Disjoint h ∅ :=
+@[simp] theorem emp_disjoint : ∀ h, Disjoint h ∅ :=
   fun _ l => .inr (by simp [EmptyCollection.emptyCollection, get?])
 
-theorem disjoint_symm : ∀ {h₁ h₂}, Disjoint h₁ h₂ → Disjoint h₂ h₁ := by grind [Disjoint]
+@[simp] theorem disjoint_symm : ∀ {h₁ h₂}, Disjoint h₁ h₂ → Disjoint h₂ h₁ := by grind [Disjoint]
 
-theorem disjoint_union_comm : ∀ {h₁ h₂ : Heap}, Disjoint h₁ h₂ →  h₁ ∪ h₂ = h₂ ∪ h₁ := by
+@[simp] theorem disjoint_union_comm : ∀ {h₁ h₂ : Heap}, Disjoint h₁ h₂ →  h₁ ∪ h₂ = h₂ ∪ h₁ := by
   intro h₁ h₂ hdisj
   funext l
   cases hdisj l <;> simp_all [get?, Union.union, union]
 
-theorem emp_union : ∀ h : Heap, ∅ ∪ h = h := by
+@[simp] theorem emp_union : ∀ h : Heap, ∅ ∪ h = h := by
   intro h
   funext l
   simp [Union.union, union, EmptyCollection.emptyCollection]
 
-theorem union_emp : ∀ h : Heap, h ∪ ∅ = h := by
+@[simp] theorem union_emp : ∀ h : Heap, h ∪ ∅ = h := by
   intro h
   rw [disjoint_union_comm (emp_disjoint h), emp_union]
 
