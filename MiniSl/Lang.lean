@@ -51,7 +51,6 @@ inductive Prog.Res (α : Type u) where
 
 def Prog (α : Type u) :=  Heap → Prog.Res α
 
-
 namespace Prog
 
 def run : Prog α → Heap → Res α

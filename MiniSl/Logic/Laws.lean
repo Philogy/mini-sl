@@ -16,6 +16,9 @@ theorem frame_rule : ∀ (p : Prog α) P P' Q, ⦃ P ⦄ p ⦃ Q ⦄ → ⦃ P �
 theorem sep_comm : ∀ P₁ P₂, P₁ ∗ P₂ = P₂ ∗ P₁ :=
   Proofs.sep_comm
 
+theorem sep_assoc : ∀ P₁ P₂ P₃, (P₁ ∗ P₂) ∗ P₃ = P₁ ∗ (P₂ ∗ P₃) :=
+  Proofs.sep_assoc
+
 theorem pure_spec : ∀ x : α, ⦃ emp ⦄ pure x ⦃ fun _ => emp ⦄ :=
   Proofs.pure_spec
 

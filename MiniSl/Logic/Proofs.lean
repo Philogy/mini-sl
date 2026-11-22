@@ -44,6 +44,21 @@ theorem sep_comm : ∀ P₁ P₂, P₁ ∗ P₂ = P₂ ∗ P₁ := by
   funext h
   exact propext ⟨comm_imp P₁ P₂ h, comm_imp P₂ P₁ h⟩
 
+theorem sep_assoc : ∀ P₁ P₂ P₃, (P₁ ∗ P₂) ∗ P₃ = P₁ ∗ (P₂ ∗ P₃) := by
+  intro P₁ P₂ P₃
+  funext h
+  apply propext
+  constructor
+  · rintro ⟨_, h₃, hd₁₂₃, rfl, ⟨h₁, h₂, hd₁₂, rfl, hp₁, hp₂⟩, hp₃⟩
+    have ⟨hd₃₁, hd₃₂⟩ := Heap.disjoint_both_is_disjoint_union.mpr (Heap.disjoint_symm hd₁₂₃)
+    exact ⟨h₁, h₂ ∪ h₃, Heap.disjoint_both_is_disjoint_union.mp ⟨hd₁₂, Heap.disjoint_symm hd₃₁⟩,
+      (Heap.union_assoc _ _ _).symm, hp₁, h₂, h₃, Heap.disjoint_symm hd₃₂, rfl, hp₂, hp₃⟩
+  · rintro ⟨h₁, _, hd₁₂₃, rfl, hp₁, ⟨h₂, h₃, hd₂₃, rfl, hp₂, hp₃⟩⟩
+    have ⟨hd₁₂, hd₁₃⟩ := Heap.disjoint_both_is_disjoint_union.mpr hd₁₂₃
+    exact ⟨h₁ ∪ h₂, h₃, Heap.disjoint_symm (Heap.disjoint_both_is_disjoint_union.mp
+      ⟨Heap.disjoint_symm hd₁₃, Heap.disjoint_symm hd₂₃⟩),
+      Heap.union_assoc _ _ _, ⟨h₁, h₂, hd₁₂, rfl, hp₁, hp₂⟩, hp₃⟩
+
 theorem pure_spec : ∀ x : α, ⦃ emp ⦄ pure x ⦃ fun _ => emp ⦄ := by
   intro x h hf hemp _
   simp_all
