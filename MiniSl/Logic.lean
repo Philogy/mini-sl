@@ -15,7 +15,6 @@ def triple (P : SPred) (f : Prog α) (Q : α → SPred) : Prop :=
   ∀ h hf, P h → h.Disjoint hf →
     let run := f.run (h ∪ hf)
     run.NoFault ∧ ∀ x hg', (x, hg') ∈ run → ∃ h', h'.Disjoint hf ∧ hg' = h' ∪ hf ∧ Q x h'
-
 notation:50 "⦃ " P " ⦄ " e " ⦃ " Q " ⦄" => triple P e Q
 
 def sep (P₁ P₂ : SPred) : SPred := fun h => ∃ h₁ h₂, h₁.Disjoint h₂ ∧ h₁ ∪ h₂ = h ∧ P₁ h₁ ∧ P₂ h₂
