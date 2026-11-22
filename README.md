@@ -1,8 +1,7 @@
 # Mini Separation Logic
 
 A minimal model of an impure language with memory, mutation and nondeterminism
-along with a separation logic to write specs about programs, made to be minimal
-an educational.
+along with a separation logic to write specs about programs, made to be educational.
 
 ## What is Separation Logic (SL) ?
 
